@@ -12,9 +12,6 @@ import cups_tray_icon as status
 
 
 class PrinterStatusTests(unittest.TestCase):
-    def setUp(self):
-        self.assertIsNotNone(status, "The printer status module must exist")
-
     def test_config_is_optional_and_rejects_invalid_shapes(self):
         with tempfile.TemporaryDirectory() as config_dir, patch.dict(os.environ, {"XDG_CONFIG_HOME": config_dir}):
             self.assertEqual(status.load_forwarders(), {})
