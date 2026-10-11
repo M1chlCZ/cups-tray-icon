@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install desktop test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-gtk-3.0 python3-cups librsvg2-common xvfb dbus-x11
+      - name: Test status and installation
+        run: /usr/bin/python3 -B -m unittest discover -s tests -v
+      - name: Check the real GTK window and tray interface
+        run: xvfb-run -a dbus-run-session -- /usr/bin/python3 tests/gui_smoke.py
