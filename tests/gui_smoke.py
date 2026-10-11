@@ -1,12 +1,14 @@
 """Check the actual GTK demo and exported tray interface in a private session bus."""
 from pathlib import Path
+import os
 import subprocess
 import sys
 import time
 
 from gi.repository import Gio, GLib
 
-process = subprocess.Popen([sys.executable, str(Path(__file__).resolve().parents[1] / "cups_tray_icon.py"), "--demo"])
+application = os.environ.get("CUPS_TRAY_ICON_APP", str(Path(__file__).resolve().parents[1] / "cups_tray_icon.py"))
+process = subprocess.Popen([sys.executable, application, "--demo"])
 bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
 try:
     deadline = time.monotonic() + 15

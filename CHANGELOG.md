@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Build an architecture-independent Debian package for each GitHub release.
+- Install runtime dependencies through APT and include a system desktop launcher.
+- Verify package contents, reproducible builds, installation, GUI startup and removal.
+
 ## 0.1.1
 
 - Documentation and internal cleanup.

@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
@@ -12,11 +13,24 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Install desktop test dependencies
+      - name: Install packaging test tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-gi gir1.2-gtk-3.0 python3-cups librsvg2-common xvfb dbus-x11
+          sudo apt-get install -y xvfb dbus-x11 libglib2.0-bin desktop-file-utils
+      - name: Build and install through APT
+        run: |
+          /usr/bin/python3 scripts/build_deb.py 0.0.0
+          sudo apt-get install -y ./dist/cups-tray-icon_0.0.0_all.deb
+          desktop-file-validate /usr/share/applications/cups-tray-icon.desktop
+          cups-tray-icon --demo --snapshot
       - name: Test status and installation
         run: /usr/bin/python3 -B -m unittest discover -s tests -v
       - name: Check the real GTK window and tray interface
+        env:
+          CUPS_TRAY_ICON_APP: /usr/lib/cups-tray-icon/cups_tray_icon.py
         run: xvfb-run -a dbus-run-session -- /usr/bin/python3 tests/gui_smoke.py
+      - name: Verify package removal
+        run: |
+          sudo apt-get remove -y cups-tray-icon
+          test ! -e /usr/bin/cups-tray-icon
+          test ! -e /usr/lib/cups-tray-icon/cups_tray_icon.py

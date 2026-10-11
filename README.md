@@ -34,6 +34,42 @@ The interface was checked on Raspberry Pi OS with labwc and wf-panel-pi.
 Other panels need to provide the same tray protocol. A GNOME desktop may need
 a tray extension. This is a desktop-session app; run it as your normal user.
 
+## Install a Debian package
+
+For Debian 12+, Ubuntu 22.04+ and current Raspberry Pi OS, download the `.deb`
+and `SHA256SUMS` from the [latest release](https://github.com/M1chlCZ/cups-tray-icon/releases/latest).
+From the download directory:
+
+```sh
+sha256sum --check SHA256SUMS
+sudo apt update
+sudo apt install ./cups-tray-icon_0.1.2_all.deb
+cups-tray-icon --show
+```
+
+Use the filename from your downloaded release. APT installs the declared Python,
+GTK, pycups, SVG and CUPS-daemon dependencies. The same `all` package works on ARM
+and x86 systems with those dependencies; desktop tray support is still required.
+The package adds an application-menu entry and a `cups-tray-icon` command.
+It does not change printer queues or enable autostart for every user.
+
+To start it automatically for your user:
+
+```sh
+mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
+sed 's/ --show$//' /usr/share/applications/cups-tray-icon.desktop > "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/cups-tray-icon.desktop"
+```
+
+Upgrade by installing the next release's `.deb` the same way. There is no APT
+repository configured for automatic updates. Remove the package with
+`sudo apt remove cups-tray-icon`; local config remains untouched. Remove the
+autostart entry separately and log out to stop a running instance.
+
+If you previously used `install.py`, uninstall that user copy first so its menu
+entry does not shadow the system package. Your printer config is preserved.
+
+## Run from source
+
 On Debian, Ubuntu or Raspberry Pi OS:
 
 ```sh
@@ -133,9 +169,29 @@ The GTK smoke check needs the runtime dependencies plus `xvfb` and `dbus-x11`:
 xvfb-run -a dbus-run-session -- /usr/bin/python3 tests/gui_smoke.py
 ```
 
-CI runs both checks. The smoke check uses demo data and does not need a printer
-or a running CUPS server. Issues and focused pull requests are welcome; omit
+CI installs the `.deb` through APT, runs the tests against the package and checks
+removal. The smoke check uses demo data and does not need a printer
+or a running CUPS server. The packaging test runs when `dpkg-deb` is available.
+Issues and focused pull requests are welcome; omit
 device serials, private addresses and document data from reports.
+
+## Release packages
+
+Publishing a GitHub release with a `vMAJOR.MINOR.PATCH` tag runs the verification
+workflow, then attaches `cups-tray-icon_VERSION_all.deb` and `SHA256SUMS`.
+Existing assets are not silently replaced on a rerun. The package contains no
+maintainer scripts and stores no per-user configuration.
+
+To build it on a Debian-based system:
+
+```sh
+export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+python3 scripts/build_deb.py 0.1.2
+```
+
+The output is in `dist/`. Builds use root ownership in the archive without
+requiring root to build. The same source, timestamp and packaging tool versions
+produce the same archive.
 
 ## License
 
