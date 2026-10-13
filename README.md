@@ -13,10 +13,9 @@ of a print queue. The gear button on each card changes only your own printing
 defaults, such as the paper size. Anything system-wide stays with the system
 printer settings tool.
 
-![CUPS Tray Icon showing two fictional printers, a print queue and a paper warning](docs/screenshot.png)
+![CUPS Tray Icon in demo mode: cards for a ready printer, a printing printer with waiting documents and a printer that needs attention](docs/screenshot.png)
 
-<!-- The screenshot shows the previous layout. Regenerate it on a Linux desktop:
-     run `cups_tray_icon.py --demo` and capture the window. -->
+<!-- Regenerate on a Linux desktop: run `cups_tray_icon.py --demo` and capture the window. -->
 
 *The window in demo mode. Printer names, documents and errors are fictional.*
 
