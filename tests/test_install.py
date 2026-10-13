@@ -6,6 +6,12 @@ import tempfile
 import time
 import unittest
 
+INSTALLED_FILES = ("cups_tray_icon.py", "LICENSE", "printer.svg", "label.svg",
+                   "cups-tray-icon.svg", "printer-ready.svg", "printer-warning.svg",
+                   "printer-error.svg", "printer-offline.svg")
+THEME_ICONS = ("cups-tray-icon.svg", "printer-ready.svg", "printer-warning.svg",
+               "printer-error.svg", "printer-offline.svg")
+
 
 class InstallTests(unittest.TestCase):
     def test_install_update_and_uninstall_preserve_user_config(self):
@@ -16,11 +22,17 @@ class InstallTests(unittest.TestCase):
                 subprocess.run([sys.executable, str(source / "install.py"), *args],
                                env=env, check=True, capture_output=True, text=True)
             run("--autostart")
-            installed = Path(env["XDG_DATA_HOME"]) / "cups-tray-icon/cups_tray_icon.py"
+            destination = Path(env["XDG_DATA_HOME"]) / "cups-tray-icon"
+            installed = destination / "cups_tray_icon.py"
             self.assertEqual(installed.read_bytes(), (source / "cups_tray_icon.py").read_bytes())
+            self.assertEqual({path.name for path in destination.iterdir()}, set(INSTALLED_FILES))
+            icons = Path(env["XDG_DATA_HOME"]) / "icons/hicolor/scalable/apps"
+            self.assertEqual({path.name for path in icons.iterdir()}, set(THEME_ICONS))
+            self.assertEqual((icons / "cups-tray-icon.svg").read_bytes(), (source / "cups-tray-icon.svg").read_bytes())
             desktop = Path(env["XDG_DATA_HOME"]) / "applications/cups-tray-icon.desktop"
             self.assertIn("%%", desktop.read_text())
             self.assertIn('" --show', desktop.read_text())
+            self.assertIn("Icon=cups-tray-icon", desktop.read_text())
             autostart = Path(env["XDG_CONFIG_HOME"]) / "autostart/cups-tray-icon.desktop"
             self.assertNotIn("--show", autostart.read_text())
             if sys.platform == "linux":
@@ -41,6 +53,7 @@ class InstallTests(unittest.TestCase):
             self.assertFalse(installed.exists())
             self.assertFalse(desktop.exists())
             self.assertFalse(autostart.exists())
+            self.assertFalse((icons / "cups-tray-icon.svg").exists())
             self.assertEqual(config.read_text(), "{}")
 
 

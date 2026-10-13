@@ -1,4 +1,4 @@
-"""Check the actual GTK demo and exported tray interface in a private session bus."""
+"""Check the actual GTK demo window and exported tray interface in a private session bus."""
 from pathlib import Path
 import os
 import subprocess
@@ -21,7 +21,13 @@ try:
                 GLib.Variant("(s)", ("org.kde.StatusNotifierItem",)), None,
                 Gio.DBusCallFlags.NONE, 1000, None)
             properties = response.unpack()[0]
-            if properties["IconName"] == "printer-error" and "2 queues" in properties["ToolTip"][3]:
+            tooltip = properties["ToolTip"][3]
+            sizes = {size for size, _, _ in properties["IconPixmap"]}
+            if (properties["IconName"] == "printer-error" and sizes == {22, 24, 32}
+                    and "Label printer — Printing" in tooltip
+                    and "Receipt printer — Needs attention" in tooltip
+                    and "USB label printer — Offline" in tooltip
+                    and "job" not in tooltip.lower()):
                 break
         except GLib.Error:
             pass
@@ -31,7 +37,7 @@ try:
     bus.call_sync("io.github.M1chlCZ.CupsTrayIcon.Demo", "/StatusNotifierItem",
         "org.kde.StatusNotifierItem", "Activate", GLib.Variant("(ii)", (0, 0)), None,
         Gio.DBusCallFlags.NONE, 1000, None)
-    print("GTK demo rendered two queues and exported an activatable tray item.")
+    print("GTK demo rendered every printer state and exported pixmap tray icons.")
 finally:
     process.terminate()
     try:

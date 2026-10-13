@@ -1,11 +1,12 @@
 name: Debian release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -19,14 +20,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: Build release package
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           case "$RELEASE_TAG" in v*) ;; *) exit 1 ;; esac
           export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
           /usr/bin/python3 scripts/build_deb.py "${RELEASE_TAG#v}"
-      - name: Attach package and checksum to release
+      - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" dist/*.deb dist/SHA256SUMS
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" --generate-notes dist/*.deb dist/SHA256SUMS

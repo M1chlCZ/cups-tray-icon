@@ -9,6 +9,12 @@ import re
 import subprocess
 import tempfile
 
+FILES = ("cups_tray_icon.py", "printer.svg", "label.svg",
+         "cups-tray-icon.svg", "printer-ready.svg", "printer-warning.svg",
+         "printer-error.svg", "printer-offline.svg")
+ICON_FILES = ("cups-tray-icon.svg", "printer-ready.svg", "printer-warning.svg",
+              "printer-error.svg", "printer-offline.svg")
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -28,13 +34,15 @@ def main():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(content.encode() if isinstance(content, str) else content)
             path.chmod(mode)
-        for name in ("cups_tray_icon.py", "printer.svg", "label.svg"):
+        for name in FILES:
             write(f"usr/lib/cups-tray-icon/{name}", (source / name).read_bytes())
+        for name in ICON_FILES:
+            write(f"usr/share/icons/hicolor/scalable/apps/{name}", (source / name).read_bytes())
         write("usr/bin/cups-tray-icon", '#!/bin/sh\nexec /usr/bin/python3 /usr/lib/cups-tray-icon/cups_tray_icon.py "$@"\n', 0o755)
         write("usr/share/applications/cups-tray-icon.desktop",
               "[Desktop Entry]\nType=Application\nName=CUPS Tray Icon\n"
-              "Comment=Local printer queues and readable error messages\n"
-              "Exec=cups-tray-icon --show\nIcon=printer\nTerminal=false\n"
+              "Comment=See the status of your local printers in plain English\n"
+              "Exec=cups-tray-icon --show\nIcon=cups-tray-icon\nTerminal=false\n"
               "Categories=System;Monitor;\nStartupNotify=false\n")
         write("usr/share/doc/cups-tray-icon/copyright", (source / "LICENSE").read_bytes())
         write("usr/share/doc/cups-tray-icon/README.md", (source / "README.md").read_bytes())
@@ -47,7 +55,7 @@ def main():
               "Depends: python3 (>= 3.10), python3-gi, python3-cups, gir1.2-gtk-3.0, librsvg2-common, cups-daemon\n"
               "Homepage: https://github.com/M1chlCZ/cups-tray-icon\n"
               "Description: Desktop tray overview for local CUPS printers\n"
-              " Shows queue counts, USB presence and plain-English printer errors.\n"
+              " Shows printer status, waiting documents and plain-English printer errors.\n"
               " Requires a graphical desktop with a StatusNotifierItem tray host.\n")
         for path in [root, *root.rglob("*")]:
             if path.is_dir():

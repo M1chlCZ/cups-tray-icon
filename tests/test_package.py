@@ -6,6 +6,12 @@ import sys
 import tempfile
 import unittest
 
+LIBRARY_FILES = {"cups_tray_icon.py", "printer.svg", "label.svg",
+                 "cups-tray-icon.svg", "printer-ready.svg", "printer-warning.svg",
+                 "printer-error.svg", "printer-offline.svg"}
+THEME_ICONS = {"cups-tray-icon.svg", "printer-ready.svg", "printer-warning.svg",
+               "printer-error.svg", "printer-offline.svg"}
+
 
 @unittest.skipUnless(shutil.which("dpkg-deb"), "Debian packaging tools are required")
 class DebianPackageTests(unittest.TestCase):
@@ -29,8 +35,15 @@ class DebianPackageTests(unittest.TestCase):
             subprocess.run(["dpkg-deb", "-R", str(package), str(root)], check=True)
             self.assertEqual((root / "usr/lib/cups-tray-icon/cups_tray_icon.py").read_bytes(),
                              (source / "cups_tray_icon.py").read_bytes())
+            self.assertEqual({path.name for path in (root / "usr/lib/cups-tray-icon").iterdir()},
+                             LIBRARY_FILES)
+            theme = root / "usr/share/icons/hicolor/scalable/apps"
+            self.assertEqual({path.name for path in theme.iterdir()}, THEME_ICONS)
+            self.assertEqual((theme / "cups-tray-icon.svg").read_bytes(), (source / "cups-tray-icon.svg").read_bytes())
             self.assertEqual((root / "usr/bin/cups-tray-icon").stat().st_mode & 0o777, 0o755)
-            self.assertIn("Exec=cups-tray-icon --show", (root / "usr/share/applications/cups-tray-icon.desktop").read_text())
+            desktop = (root / "usr/share/applications/cups-tray-icon.desktop").read_text()
+            self.assertIn("Exec=cups-tray-icon --show", desktop)
+            self.assertIn("Icon=cups-tray-icon", desktop)
             self.assertFalse((root / "etc").exists())
             self.assertFalse((root / "home").exists())
             self.assertEqual({path.name for path in (root / "DEBIAN").iterdir()}, {"control"})
